@@ -16,6 +16,7 @@ defmodule Poker do
 
 		hand1 = Enum.sort(hand1)
 		hand2 = Enum.sort(hand2)
+		IO.puts "hands -----"
 		IO.inspect hand1 
 		IO.inspect hand2 
 		compare(hand1, hand2)
@@ -28,6 +29,7 @@ defmodule Poker do
 	def compare(hand1, hand2) do
 		hand1_value = getValue(hand1)
 		hand2_value = getValue(hand2)
+		IO.puts "hand values ---"
 		IO.inspect hand1_value
 		IO.inspect hand2_value
 		if hand1_value == hand2_value do
@@ -147,8 +149,6 @@ defmodule Poker do
 	#should this function only be passed the part of the hand that matters (like the pair?).
 	#either returns the winning hand or a 0.
 	def tieBreaker(list1, list2, hand_value) do
-		IO.inspect list1
-		IO. puts "---"
 		if hand_value == 1 do
 			breakHighCardTie(list1, list2)
 		else
@@ -194,7 +194,7 @@ defmodule Poker do
 		hand1 = turnIntoHand(list1, 2)
 		hand2 = turnIntoHand(list2, 2)
 		hand1 = Enum.sort(hand1)
-		hand2 = Enum.sort(hand1)
+		hand2 = Enum.sort(hand2)
 		hand1 = Enum.reverse(hand1) #make highest card first
 		hand2 = Enum.reverse(hand2)
 		res = returnHigestNonIdenticalCard(hand1, hand2)
@@ -205,7 +205,7 @@ defmodule Poker do
 				printWinner(list2)
 			else
 				#by now we know that we have a totally identical hand, and to break the tie we need
-				#to compare the suits of the two highest cards.
+				#to compare the suits of the two highest cards. //TODO
 				highest_suit = breakCardSuitTie(hd(list1), hd(list2))
 				if highest_suit == hd(list1) do
 					printWinner(list1)
@@ -229,14 +229,21 @@ defmodule Poker do
 	end
 
 	def breakStraightTie(list1, list2) do
-		list1 = Enum.reverse(list1) #make highest card first
-		list2 = Enum.reverse(list2)
-		if hd(list1) > hd(list2) do
+		hand1 = turnIntoHand(list1, 2)
+		hand2 = turnIntoHand(list2, 2)
+		hand1 = Enum.sort(hand1)
+		hand2 = Enum.sort(hand2)
+		hand1 = Enum.reverse(hand1) #make highest card first
+		hand2 = Enum.reverse(hand2)
+		res = returnHigestNonIdenticalCard(hand1, hand2)
+		if res == 1 do
 			printWinner(list1)
 		else
-			if hd(list2) > hd(list1) do
+			if res == 2 do
 				printWinner(list2)
 			else
+				#by now we know that we have a totally identical hand, and to break the tie we need
+				#to compare the suits of the two highest cards. //TODO
 				highest_suit = breakCardSuitTie(hd(list1), hd(list2))
 				if highest_suit == hd(list1) do
 					printWinner(list1)
@@ -248,34 +255,45 @@ defmodule Poker do
 	end
 
 	def breakFlushTie(list1, list2) do
-		list1 = Enum.sort(list1)
-		list2 = Enum.sort(list2)
-		list1 = Enum.reverse(list1)
-		list2 = Enum.reverse(list2)
-		if hd(list1) > hd(list2) do
+		hand1 = turnIntoHand(list1, 2)
+		hand2 = turnIntoHand(list2, 2)
+		hand1 = Enum.sort(hand1)
+		hand2 = Enum.sort(hand2)
+		hand1 = Enum.reverse(hand1) #make highest card first
+		hand2 = Enum.reverse(hand2)
+		res = returnHigestNonIdenticalCard(hand1, hand2)
+		if res == 1 do
 			printWinner(list1)
 		else
-			if hd(list2) > hd(list1) do
+			if res == 2 do
 				printWinner(list2)
 			else
-				breakCardSuitTie(list1, list2)
+				#by now we know that we have a totally identical hand, and to break the tie we need
+				#to compare the suits of the two highest cards. //TODO
+				highest_suit = breakCardSuitTie(hd(list1), hd(list2))
+				if highest_suit == hd(list1) do
+					printWinner(list1)
+				else
+					printWinner(list2)
+				end
 			end
 		end
 	end
 
 	def breakFullHouseTie(list1, list2) do
-		
+		#find out which are the 3 and which are the 2
 	end
 
 	def breakFourOfAKindTie(list1, list2) do
-		
+		#just need to compare the 4 of a kind ones. Theres no way they can be the same 4 cards lol
+		#find out which are the 4
 	end
 
 	def breakStraightFlushTie(list1, list2) do
 		hand1 = turnIntoHand(list1, 2)
 		hand2 = turnIntoHand(list2, 2)
 		hand1 = Enum.sort(hand1)
-		hand2 = Enum.sort(hand1)
+		hand2 = Enum.sort(hand2)
 		hand1 = Enum.reverse(hand1) #make highest card first
 		hand2 = Enum.reverse(hand2)
 		if hd(hand1) > hd(hand2) do
@@ -297,7 +315,12 @@ defmodule Poker do
 	end
 
 	def breakRoyalFlushTie(list1, list2) do
-		
+		highest_suit = breakCardSuitTie(hd(list1), hd(list2))
+		if highest_suit == hd(list1) do
+			printWinner(list1)
+		else
+			printWinner(list2)
+		end
 	end
 
 	def returnHigestNonIdenticalCard(list1, list2) do
@@ -399,7 +422,6 @@ defmodule Poker do
 	end
 	def turnHandIntoMap(full_hand, hand_map, aces) do
 		if full_hand == [] do
-			IO.inspect hand_map 
 			hand_map
 		else
 			suit = checkSuit(hd(full_hand))
@@ -431,18 +453,26 @@ end
 
 #complete the tie breaker.
 
-winner = Poker.deal [2, 15, 3, 16, 4, 17, 5, 18, 6, 19]
 IO.puts "==================================="
-#winner = Poker.deal [6, 1, 2, 14, 3, 6, 4, 19, 5, 10]
-#IO.puts "==================================="
+winner = Poker.deal [44, 19, 46, 20, 48, 22, 49, 23, 52, 26]
+IO.puts "==================================="
 #winner = Poker.deal [8, 1, 2, 14, 35, 6, 26, 19, 14, 10]
 #IO.puts "==================================="
 #winner = Poker.deal [8, 1, 2, 14, 35, 6, 26, 19, 14, 10]
+
+#test for royal flush
+#winner = Poker.deal [40, 14, 49, 23, 50, 24, 51, 25, 52, 26]
+#test for straight flush
+#winner = Poker.deal [48, 22, 49, 23, 50, 24, 51, 25, 52, 26]
 
 
 
 
 #What I think is complete:
 # the straight flush is totally done. all checking and comparing is I think, finished.
+#royal flush is done
+
+
+# flushes are done
 
 
