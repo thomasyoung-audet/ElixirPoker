@@ -216,10 +216,54 @@ defmodule Poker do
 
 	def breakPairTie(list1, list2) do
 		
+		#1. find which cards are the pair
+		pair1trueval = findPair(list1)
+		pair2trueval = findPair(list2)
+		pair1val = turnIntoHand(pair1trueval, 2)
+		pair2val = turnIntoHand(pair2trueval, 2)
+		#2. compare them
+		res = returnHighestNonIdenticalCard(pair1val, pair2val)
+		if res == 1 do
+			printWinner(list1)
+		else
+			if res == 2 do
+				printWinner(list2)
+			else
+				#3. compare the rest of the cards in a reverse sorted way
+				hand1 = list1 -- pair1trueval
+				hand2 = list2 -- pair2trueval
+				hand1 = turnIntoHand(hand1, 2, true)
+				hand2 = turnIntoHand(hand2, 2, true)
+				res = returnHighestNonIdenticalCard(hand1, hand2)
+				if res == 1 do
+					printWinner(list1)
+				else
+					if res == 2 do
+						printWinner(list2)
+					else
+						#4. compare the suits of the pair
+						#find the highest card in the first pair
+						IO.puts "whole thing is the same"
+						highest_suit1 = breakCardSuitTie(hd(pair1trueval), hd(tl(pair1trueval)))
+						highest_suit2 = breakCardSuitTie(hd(pair2trueval), hd(tl(pair2trueval)))
+						highest_suit = breakCardSuitTie(highest_suit1, highest_suit2)
+						if highest_suit == highest_suit1 do
+							printWinner(list1)
+						else
+							printWinner(list2)
+						end
+					end
+				end
+			end
+		end
 	end
 
 	def breakTwoPairTie(list1, list2) do
-		
+		#1. find the 2 pairs
+		#compare the highest two
+		#compare the lowest two
+		#compare the last card in the hand
+		#compare the suit of the highest pair
 	end
 
 	def breakThreeOfAKindTie(list1, list2) do
@@ -366,6 +410,25 @@ defmodule Poker do
 		end
 	end
 
+	#returns the two numbers of the pair (like [15, 2] for 2)
+	def findPair(list), do: findPair(tl(list), hd(list), tl(list))
+	def findPair(list, num1, rest_of_list) do
+		if list == [] do
+			:error
+		else
+			if rest_of_list == [] do
+				findPair(tl(list), hd(list), tl(list))
+			else
+				if rem(num1, 13) == rem(hd(rest_of_list), 13) do
+					IO.inspect [num1, hd(rest_of_list)]
+					[num1, hd(rest_of_list)]
+				else
+					findPair(list, num1, tl(rest_of_list))
+				end
+			end
+		end
+	end
+
 	def findHighestRankingCard(list), do: findHighestRankingCard(list, 0)
 	def findHighestRankingCard(list, num) do
 		if list == [] do
@@ -437,7 +500,7 @@ defmodule Poker do
 		#make 0's into 13's, 1's into 14s
 		hand_numbers = orderer(hand_numbers, num)
 	end
-	def turnIntoHand(list, num, order) do
+	def turnIntoHand(list, num, order_the_list) do
 		#mod 12 it here, to preserve the suits for other functions
 		hand_numbers = Enum.map(list, fn x -> rem(x, 13) end)
 		#make 0's into 13's, 1's into 14s
@@ -468,35 +531,34 @@ defmodule Poker do
 	def turnHandIntoMap(full_hand, aces) do
 		suit = checkSuit(hd(full_hand))
 		real_nums = turnIntoHand(full_hand, aces)
-		turnHandIntoMap(tl(full_hand), [card: %{num: hd(real_nums), suit: suit}], aces)
+		turnHandIntoMap(tl(full_hand), [[hd(real_nums), suit]], aces)
 	end
 	def turnHandIntoMap(full_hand, hand_map, aces) do
 		if full_hand == [] do
+			hand_map = Enum.sort_by(hand_map, &Enum.sort/1)
 			hand_map
 		else
 			suit = checkSuit(hd(full_hand))
 			real_nums = turnIntoHand(full_hand, aces)
-			turnHandIntoMap(tl(full_hand), hand_map ++ [card: %{num: hd(real_nums), suit: suit}], aces)	
+			turnHandIntoMap(tl(full_hand), hand_map ++ [[hd(real_nums), suit]], aces)	
 		end
-
 	end
 
 	#gives the winning list its suit and prints it properly. 
 	def printWinner(list) do
 		suit_num_map = turnHandIntoMap(list, 1)
 		Enum.sort(suit_num_map)
-		IO.inspect suit_num_map
 		#turn into a map {(num, suit)} -> Then sort it
-		suit = suit_num_map[:card].suit
-		num = suit_num_map[:card].num
+		suit = hd(tl(hd(suit_num_map)))
+		num = hd(hd(suit_num_map))
 		printWinner(tl(suit_num_map), [Integer.to_string(num) <> suit])
 	end
 	def printWinner(suit_num_map, winnerlist) do
 		if suit_num_map == [] do
 			IO.inspect winnerlist
 		else
-			suit = suit_num_map[:card].suit
-			num = suit_num_map[:card].num
+			suit = hd(tl(hd(suit_num_map)))
+			num = hd(hd(suit_num_map))
 			printWinner(tl(suit_num_map), winnerlist ++ [Integer.to_string(num) <> suit])
 		end
 	end
@@ -506,9 +568,9 @@ end
 #finish weird ordering from printWinner from winner = Poker.deal [1, 2, 26, 15, 27, 28, 40, 41, 14, 52]
 
 IO.puts "==================================="
-winner = Poker.deal [3, 16, 17, 30, 31, 18, 45, 33, 46, 32]
-IO.puts "==================================="
-#winner = Poker.deal [8, 1, 2, 14, 35, 6, 26, 19, 14, 10]
+#winner = Poker.findPair [23,2, 5,50, 28]
+#winner = Poker.deal [3, 16, 17, 30, 31, 18, 45, 33, 46, 32]
+#winner = Poker.deal [1, 2, 26, 15, 27, 28, 40, 41, 14, 52]
 #IO.puts "==================================="
 #winner = Poker.deal [8, 1, 2, 14, 35, 6, 26, 19, 14, 10]
 
@@ -526,7 +588,12 @@ IO.puts "==================================="
 #winner = Poker.deal [3, 16, 17, 30, 31, 18, 45, 33, 46, 32]
 #test for two pair
 
-#est for pair
+#test for pair - all the same
+#winner = Poker.deal [28, 41, 23, 36, 5, 18, 50, 11, 2, 15]
+#test for pair - same pairs, bigger card
+#winner = Poker.deal [28, 41, 23, 36, 5, 18, 51, 11, 2, 15]
+#test for pair - different pairs
+#winner = Poker.deal [29, 41, 23, 36, 5, 18, 50, 11, 3, 15]
 
 
 #test for high card?
