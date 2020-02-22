@@ -243,7 +243,6 @@ defmodule Poker do
 					else
 						#4. compare the suits of the pair
 						#find the highest card in the first pair
-						IO.puts "whole thing is the same"
 						highest_suit1 = breakCardSuitTie(hd(pair1trueval), hd(tl(pair1trueval)))
 						highest_suit2 = breakCardSuitTie(hd(pair2trueval), hd(tl(pair2trueval)))
 						highest_suit = breakCardSuitTie(highest_suit1, highest_suit2)
@@ -259,11 +258,59 @@ defmodule Poker do
 	end
 
 	def breakTwoPairTie(list1, list2) do
+		
 		#1. find the 2 pairs
+		list1_pair1trueval = findPair(list1)
+		list1_pair2trueval = findPair(list1--list1_pair1trueval)
+		list2_pair1trueval = findPair(list2)
+		list2_pair2trueval = findPair(list2--list2_pair1trueval)
+		list1_pair1val = turnIntoHand(list1_pair1trueval, 2)
+		list1_pair2val = turnIntoHand(list1_pair2trueval, 2)
+		list2_pair1val = turnIntoHand(list2_pair1trueval, 2)
+		list2_pair2val = turnIntoHand(list2_pair2trueval, 2)
 		#compare the highest two
-		#compare the lowest two
-		#compare the last card in the hand
-		#compare the suit of the highest pair
+		highest_list1pair = returnHighestNonIdenticalCard(list1_pair1val, list1_pair2val)
+		highest_list2pair = returnHighestNonIdenticalCard(list1_pair1val, list2_pair2val)
+		res = returnHighestNonIdenticalCard(highest_list1pair, highest_list2pair)
+		if res == 1 do
+			printWinner(list1)
+		else
+			if res == 2 do
+				printWinner(list2)
+			else
+				#compare the lowest two
+				lowest_list1pair = list1_pair1val ++ list1_pair2val -- highest_list1pair
+				lowest_list2pair = list2_pair1val ++ list2_pair2val -- highest_list2pair
+				res = returnHighestNonIdenticalCard(highest_list1pair, highest_list2pair)
+				if res == 1 do
+					printWinner(list1)
+				else
+					if res == 2 do
+						printWinner(list2)
+					else
+						#compare the last card in the hand
+						res = returnHighestNonIdenticalCard(list1 -- list1_pair1trueval -- list1_pair2trueval, list2 -- list2_pair1trueval -- list2_pair2trueval)
+						if res == 1 do
+							printWinner(list1)
+						else
+							if res == 2 do
+								printWinner(list2)
+							else
+								#compare the suit of the highest pair
+								highest_suit1 = breakCardSuitTie(hd(pair1trueval), hd(tl(pair1trueval)))
+								highest_suit2 = breakCardSuitTie(hd(pair2trueval), hd(tl(pair2trueval)))
+								highest_suit = breakCardSuitTie(highest_suit1, highest_suit2)
+								if highest_suit == highest_suit1 do
+									printWinner(list1)
+								else
+									printWinner(list2)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
 	end
 
 	def breakThreeOfAKindTie(list1, list2) do
