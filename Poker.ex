@@ -1,37 +1,39 @@
 defmodule Poker do
 	def deal(list) do
-		hand1 = []
-		hand2 = []
 		#split list into 2 lists
-		hand2 = [Enum.at(list, 9) | hand2]
-		hand1 = [Enum.at(list, 8) | hand1]
-		hand2 = [Enum.at(list, 7) | hand2]
-		hand1 = [Enum.at(list, 6) | hand1]
-		hand2 = [Enum.at(list, 5) | hand2]
-		hand1 = [Enum.at(list, 4) | hand1]
-		hand2 = [Enum.at(list, 3) | hand2]
-		hand1 = [Enum.at(list, 2) | hand1]
-		hand2 = [Enum.at(list, 1) | hand2]
-		hand1 = [Enum.at(list, 0) | hand1]
+		hands = split(list, [], [])
+		hand1 = hd(hands)
+		hand2 = hd(tl(hands))
 
 		hand1 = Enum.sort(hand1)
 		hand2 = Enum.sort(hand2)
-		IO.puts "hands -----"
-		IO.inspect hand1 
-		IO.inspect hand2 
+		#IO.puts "hands -----"
+		#IO.inspect hand1 
+		#IO.inspect hand2 
+
 		compare(hand1, hand2)
 	end
+
+	def split([], hand1, hand2), do: [hand1, hand2]
+	def split(list, hand1, hand2) do
+		hand1 = hand1 ++ [hd(list)]
+		splitleft(tl(list), hand1, hand2)
+	end
+	defp splitleft(list, hand1, hand2) do
+		hand2 = hand2 ++ [hd(list)]
+		split(tl(list), hand1, hand2)
+	end
 	
-	#how am i going to do this. I think i check for every hand, and assign it a numerical value
-	#depending on how good the hand is. at this point not dealing with ties. Ill make another function do that
+	#I check for every hand, and assign it a numerical value
+	#depending on how good the hand is. at this point not dealing with ties.
 	#if two hand end up having the same numerical value.
 	#returns the numerical raking value for both lists as a tuple/list.
 	def compare(hand1, hand2) do
 		hand1_value = getValue(hand1)
 		hand2_value = getValue(hand2)
-		IO.puts "hand values ---"
-		IO.inspect hand1_value
-		IO.inspect hand2_value
+		#IO.puts "hand values ---"
+		#IO.inspect hand1_value
+		#IO.inspect hand2_value
 		if hand1_value == hand2_value do
 			tieBreaker(hand1, hand2, hand1_value)
 		else
@@ -46,7 +48,7 @@ defmodule Poker do
 	def getValue(list) do
 		hand_numbers = turnIntoHand(list, 2)
 		hand_numbers = Enum.sort(hand_numbers)
-		IO.inspect hand_numbers
+		#IO.inspect hand_numbers
 
 		#check if its a royal flush - 10
 		if Enum.member?(hand_numbers, 10) && Enum.member?(hand_numbers, 11)
@@ -269,9 +271,13 @@ defmodule Poker do
 		list2_pair1val = turnIntoHand(list2_pair1trueval, 2)
 		list2_pair2val = turnIntoHand(list2_pair2trueval, 2)
 		#compare the highest two
-		highest_list1pair = returnHighestNonIdenticalCard(list1_pair1val, list1_pair2val)
-		highest_list2pair = returnHighestNonIdenticalCard(list1_pair1val, list2_pair2val)
-		res = returnHighestNonIdenticalCard(highest_list1pair, highest_list2pair)
+		highest_list1pairtrue = returnHighestPair(list1_pair1trueval, list1_pair2trueval)
+		highest_list2pairtrue = returnHighestPair(list1_pair1trueval, list2_pair2trueval)
+
+		highest_list1pair = turnIntoHand(highest_list1pairtrue, 2)
+		highest_list2pair = turnIntoHand(highest_list2pairtrue, 2)
+
+		res = returnHighestNonIdenticalCard([highest_list1pair], [highest_list2pair])
 		if res == 1 do
 			printWinner(list1)
 		else
@@ -281,7 +287,8 @@ defmodule Poker do
 				#compare the lowest two
 				lowest_list1pair = list1_pair1val ++ list1_pair2val -- highest_list1pair
 				lowest_list2pair = list2_pair1val ++ list2_pair2val -- highest_list2pair
-				res = returnHighestNonIdenticalCard(highest_list1pair, highest_list2pair)
+
+				res = returnHighestNonIdenticalCard(lowest_list1pair, lowest_list2pair)
 				if res == 1 do
 					printWinner(list1)
 				else
@@ -289,7 +296,7 @@ defmodule Poker do
 						printWinner(list2)
 					else
 						#compare the last card in the hand
-						res = returnHighestNonIdenticalCard(list1 -- list1_pair1trueval -- list1_pair2trueval, list2 -- list2_pair1trueval -- list2_pair2trueval)
+						res = returnHighestNonIdenticalCard((turnIntoHand(list1, 2) -- list1_pair1val) -- list1_pair2val, (turnIntoHand(list2, 2) -- list2_pair1val) -- list2_pair2val)
 						if res == 1 do
 							printWinner(list1)
 						else
@@ -297,9 +304,10 @@ defmodule Poker do
 								printWinner(list2)
 							else
 								#compare the suit of the highest pair
-								highest_suit1 = breakCardSuitTie(hd(pair1trueval), hd(tl(pair1trueval)))
-								highest_suit2 = breakCardSuitTie(hd(pair2trueval), hd(tl(pair2trueval)))
+								highest_suit1 = breakCardSuitTie(hd(highest_list1pairtrue), hd(tl(highest_list1pairtrue)))
+								highest_suit2 = breakCardSuitTie(hd(highest_list2pairtrue), hd(tl(highest_list2pairtrue)))
 								highest_suit = breakCardSuitTie(highest_suit1, highest_suit2)
+
 								if highest_suit == highest_suit1 do
 									printWinner(list1)
 								else
@@ -333,8 +341,6 @@ defmodule Poker do
 	def breakStraightTie(list1, list2) do
 		hand1 = turnIntoHand(list1, 2, true)
 		hand2 = turnIntoHand(list2, 2, true)
-		IO.inspect hand1
-		IO.inspect hand2
 		res = returnHighestNonIdenticalCard(hand1, hand2)
 		if res == 1 do
 			printWinner(list1)
@@ -457,6 +463,19 @@ defmodule Poker do
 		end
 	end
 
+	def returnHighestPair(pair1, pair2) do
+		#compare the actual values
+		pair1val = turnIntoHand(pair1, 2)
+		pair2val = turnIntoHand(pair2, 2)
+		#IO.inspect pair1val
+		#IO.inspect pair2val
+		if pair1val > pair2val do
+			pair1
+		else
+			pair2
+		end
+	end
+
 	#returns the two numbers of the pair (like [15, 2] for 2)
 	def findPair(list), do: findPair(tl(list), hd(list), tl(list))
 	def findPair(list, num1, rest_of_list) do
@@ -467,7 +486,6 @@ defmodule Poker do
 				findPair(tl(list), hd(list), tl(list))
 			else
 				if rem(num1, 13) == rem(hd(rest_of_list), 13) do
-					IO.inspect [num1, hd(rest_of_list)]
 					[num1, hd(rest_of_list)]
 				else
 					findPair(list, num1, tl(rest_of_list))
@@ -492,8 +510,10 @@ defmodule Poker do
 	end
 
 	def breakCardSuitTie(card1, card2) do
+
 		suit1 = checkSuit(card1)
 		suit2 = checkSuit(card2)
+
 		if suit1 == "S" do
 			card1
 		else
@@ -614,34 +634,50 @@ end
 #i think ive got only the pairs left to deal with for tie
 #finish weird ordering from printWinner from winner = Poker.deal [1, 2, 26, 15, 27, 28, 40, 41, 14, 52]
 
-IO.puts "==================================="
-#winner = Poker.findPair [23,2, 5,50, 28]
-#winner = Poker.deal [3, 16, 17, 30, 31, 18, 45, 33, 46, 32]
+#IO.puts "==================================="
 #winner = Poker.deal [1, 2, 26, 15, 27, 28, 40, 41, 14, 52]
 #IO.puts "==================================="
 #winner = Poker.deal [8, 1, 2, 14, 35, 6, 26, 19, 14, 10]
 
 #test for royal flush
 #winner = Poker.deal [40, 14, 49, 23, 50, 24, 51, 25, 52, 26]
+
 #test for straight flush
 #winner = Poker.deal [48, 22, 49, 23, 50, 24, 51, 25, 52, 26]
+
 #test for 4 of a kind
 #winner = Poker.deal [1, 2, 26, 15, 27, 28, 40, 41, 14, 52]
-#test for full house and 3 of a kind
-#winner = Poker.deal [13, 2, 26, 15, 39, 28, 9, 10, 12, 11]
+
+#test for full house
+#winner = Poker.deal [1, 39, 26, 15, 27, 28, 40, 41, 13, 52]
+
 #test for flush
-#winner = Poker.deal [42, 21, 49, 23, 50, 24, 51, 25, 52, 26]
+#winner = Poker.deal [41, 21, 48, 23, 50, 24, 51, 25, 52, 26]
+
 #test for straight
 #winner = Poker.deal [3, 16, 17, 30, 31, 18, 45, 33, 46, 32]
-#test for two pair
+#winner = Poker.deal [40, 14, 49, 23, 50, 24, 51, 25, 39, 13]
+
+
+#test three of a kind
+#winner = Poker.deal [13, 2, 26, 15, 39, 28, 9, 10, 12, 11]
 
 #test for pair - all the same
 #winner = Poker.deal [28, 41, 23, 36, 5, 18, 50, 11, 2, 15]
 #test for pair - same pairs, bigger card
-#winner = Poker.deal [28, 41, 23, 36, 5, 18, 51, 11, 2, 15]
+#winner = Poker.deal [28, 41, 23, 36, 4, 18, 50, 11, 2, 15]
 #test for pair - different pairs
 #winner = Poker.deal [29, 41, 23, 36, 5, 18, 50, 11, 3, 15]
 
+#test for two pair - all the same
+#winner = Poker.deal [28, 41, 23, 36, 5, 18, 31, 44, 2, 15]
+#test for two pair - same pairs, bigger card
+#winner = Poker.deal [28, 41, 24, 49, 5, 18, 31, 44, 2, 15]
+#test for two pair - one different pair
+#winner = Poker.deal [29, 41, 23, 36, 5, 18, 31, 44, 3, 15]
+winner = Poker.deal [27, 41, 23, 36, 1, 18, 28, 44, 2, 15]
+#test for two pair - different pairs
+#winner = Poker.deal [29, 41, 23, 6, 36, 18, 31, 44, 3, 15]
 
-#test for high card?
-
+#test for high card
+#winner = Poker.deal [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
