@@ -18,7 +18,7 @@ enum Suit {
 }
 
 impl Suit {
-    fn short_string(&self) -> &'static str {
+    fn short_form(&self) -> &'static str {
         match *self {
             Suit::Spades => "S",
             Suit::Hearts => "H",
@@ -26,6 +26,17 @@ impl Suit {
             Suit::Clubs => "C",
         }
     }
+}
+
+impl Suit {
+	fn best_suit(&self) -> u8 {
+		match *self {
+			Suit::Spades => 1, //best suit
+            Suit::Hearts => 2,
+            Suit::Diamonds => 3,
+            Suit::Clubs => 4, //worst suit
+		}
+	}
 }
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
 struct Card {
@@ -38,11 +49,11 @@ impl Card {
     	if value < 14 {
     		Card{ value: value, suit: Suit::Clubs }
     	} else if value < 27 {
-    		Card{ value: value, suit: Suit::Diamonds }
+    		Card{ value: value - 13, suit: Suit::Diamonds }
     	} else if value < 40 {
-    		Card{ value: value, suit: Suit::Hearts }
+    		Card{ value: value - 26, suit: Suit::Hearts }
     	} else {
-    		Card{ value: value, suit: Suit::Spades }
+    		Card{ value: value - 39, suit: Suit::Spades }
     	}
         
     }
@@ -50,12 +61,22 @@ impl Card {
 
 impl fmt::Display for Card { //TODO change this for sure
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.value.to_string(), self.suit.short_string())
+        write!(f, "{}{}", self.value.to_string(), self.suit.short_form())
     }
 }
 
+impl Card {
+	fn compare_val(&self) -> u32{
+		if self.value == 1 {
+			return 14
+		} else {
+			return self.value
+		}
+	}
+}
 
-fn deal(arr: [u32; 10]) {
+
+fn deal(arr: [u32; 10]) -> [String;5]{
 
 	//split the list into the hands
 	let mut hand1: Vec<Card> = Vec::new();
@@ -70,52 +91,167 @@ fn deal(arr: [u32; 10]) {
 			switch = true;
 		}
 	}
+	hand1 = sort_hand(hand1);
+	hand2 = sort_hand(hand2);
 	//determine what type of hand it is
 	println!("Hands: ");
 	println!("{:?}", hand1);
 	println!("{:?}", hand2);
 	println!("{}", hand1[0]);
 	//["1C", "2C", "3C", "4C", "5C"];
-	compare(hand1, hand2);
 
+
+	let winning_hand = compare(hand1, hand2);
+	let winner = [winning_hand[0].to_string(), winning_hand[1].to_string(), 
+	winning_hand[2].to_string(), winning_hand[3].to_string(), winning_hand[4].to_string()];
+	winner
 }
 
-fn compare(hand1: Vec<Card>, hand2: Vec<Card>) {
+fn compare(hand1: Vec<Card>, hand2: Vec<Card>) -> Vec<Card> {
 	//I check for every hand, and assign it a numerical value
 	//depending on how good the hand is. at this point not dealing with ties.
 	//if two hand end up having the same numerical value.
 	//returns the numerical raking value for both lists as a tuple/list.
-	let hand1_value = get_value(hand1);
-	let hand2_value = get_value(hand2);
+	let hand1_value = get_value(&hand1);
+	let hand2_value = get_value(&hand2);
 	println!("hand values ---");
 	println!("{}", hand1_value);
 	println!("{}", hand2_value);
 
 	if hand1_value == hand2_value {
-		//tieBreaker(hand1, hand2, hand1_value)
+		return tie_breaker(hand1, hand2, hand1_value)
 	}
 	else {
 		if hand1_value > hand2_value {
-			//printWinner(hand1)
+			hand1
 		}
 		else {
-			//printWinner(hand2)
+			hand2
 		}
 	}
 }
 
-fn get_value(hand: Vec<Card>) -> u32 {
-	1
-
+fn get_value(hand: &Vec<Card>) -> u8 {
+	//if theyre all the same suit
+	if hand[0].suit == hand[1].suit && hand[1].suit == hand[2].suit && 
+	hand[2].suit == hand[3].suit && hand[3].suit == hand[4].suit {
+		//check if its a full house
+		if hand[0].value == 10 && hand[1].value == 11 && hand[2].value == 12 && hand[3].value == 13 
+		&& hand[4].value == 1 {
+			return 1
+		} else if hand[0].value == hand[1].value -1 && hand[1].value == hand[2].value -1 
+		&& hand[2].value == hand[3].value -1 && hand[3].value == hand[4].value -1 { //its a straight flush
+			return 2
+		} else { //its a normal flush
+			return 5
+		}
+	} else {
+		//if its 4 of a kind, 
+		if (hand[0].value == hand[1].value && hand[1].value == hand[2].value && 
+		hand[2].value == hand[3].value) ||  
+		(hand[1].value == hand[2].value && hand[2].value == hand[3].value && 
+		hand[3].value == hand[4].value) {
+			return 3
+		} else if (hand[0].value == hand[1].value && hand[1].value == hand[2].value && 
+		hand[3].value == hand[4].value) ||  
+		(hand[0].value == hand[1].value && hand[2].value == hand[3].value && 
+		hand[3].value == hand[4].value) { //if its full house
+			return 4
+		} else if hand[0].value == hand[1].value -1 && hand[1].value == hand[2].value -1 
+		&& hand[2].value == hand[3].value -1 && hand[3].value == hand[4].value -1 { // if its a straight
+			return 6
+		} else if (hand[0].value == hand[1].value && hand[1].value == hand[2].value) ||  
+		(hand[2].value == hand[3].value && hand[3].value == hand[4].value){ //if its 3 of a kind
+			return 7
+		} else if (hand[0].value == hand[1].value && hand[2].value == hand[3].value) ||  
+		(hand[0].value == hand[1].value && hand[3].value == hand[4].value) || 
+		(hand[1].value == hand[2].value && hand[3].value == hand[4].value)  { //if its two pair
+			return 8
+		} else if hand[0].value == hand[1].value || hand[1].value == hand[2].value ||  
+		hand[2].value == hand[3].value || hand[3].value == hand[4].value { //if its a pair.
+			return 9
+		} else {
+			return 10
+		}
+	}
 }
 
-//fn tie_breaker(hand1: Vec<u32>, hand2: Vec<u32>, handValue: u32) -> Vec<u32> {
+fn sort_hand(mut hand: Vec<Card>) -> Vec<Card> {
+	hand.sort_by_key(|x| x.value);
+	while hand[0].value == 1 {
+		hand.push(hand[0]);
+		hand.remove(0);
+	}
+	return hand
+}
 
-//}
+
+fn tie_breaker(hand1: Vec<Card>, hand2: Vec<Card>, hand_value: u8) -> Vec<Card> {
+	if hand_value == 1 {
+		if hand1[0].suit.best_suit() < hand2[0].suit.best_suit() {
+			return hand1
+		} else {
+			return hand2
+		}
+	} else if hand_value == 2 {
+		if hand1[4].compare_val() > hand2[4].compare_val() {
+			return hand1
+		} else {
+			return hand2
+		}
+	} else {
+		return hand2
+	}
+}
 
 
 fn main() {
-	let perm:[u32;10] = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];
-	//let winner:[&str;5] = deal(perm);
-	deal(perm)
+	//let perm:[u32;10] = [2, 46, 3, 2, 4, 45, 5, 52, 6, 47];
+	//let perm:[u32;10] = [1, 2, 26, 15, 27, 28, 40, 41, 14, 52]
+	//let perm:[u32;10] = [8, 1, 2, 14, 35, 6, 26, 19, 14, 10]
+
+	//test for royal flush
+	//let perm:[u32;10] = [40, 14, 49, 23, 50, 24, 51, 25, 52, 26];
+
+	//test for straight flush
+	let perm:[u32;10] = [48, 22, 49, 23, 50, 24, 51, 25, 52, 26];
+
+	//test for 4 of a kind
+	//let perm:[u32;10] = [1, 2, 26, 15, 27, 28, 40, 41, 14, 52];
+
+	//test for full house
+	//let perm:[u32;10] = [1, 39, 26, 15, 27, 28, 40, 41, 13, 52];
+
+	//test for flush
+	//let perm:[u32;10] = [41, 21, 48, 23, 50, 24, 51, 25, 52, 26];
+
+	//test for straight
+	//let perm:[u32;10] = [3, 16, 17, 30, 31, 18, 45, 33, 46, 32];
+	//let perm:[u32;10] = [40, 14, 49, 23, 50, 24, 51, 25, 39, 13];
+
+	//test three of a kind
+	//let perm:[u32;10] = [13, 2, 26, 15, 39, 28, 9, 10, 12, 11];
+
+	//test for two pair - all the same
+	//let perm:[u32;10] = [28, 41, 23, 36, 5, 18, 31, 44, 2, 15];
+	//test for two pair - same pairs, bigger card
+	//let perm:[u32;10] = [28, 41, 24, 49, 5, 18, 31, 44, 2, 15];
+	//test for two pair - one different pair
+	//let perm:[u32;10] = [29, 41, 23, 36, 5, 18, 31, 44, 3, 15];
+	//let perm:[u32;10] = [27, 41, 23, 36, 1, 18, 28, 44, 2, 15];
+	//test for two pair - different pairs
+	//let perm:[u32;10] = [29, 41, 23, 6, 36, 18, 31, 44, 3, 15];
+
+	//test for pair - all the same
+	//let perm:[u32;10] = [28, 41, 23, 36, 5, 18, 50, 11, 2, 15];
+	//test for pair - same pairs, bigger card
+	//let perm:[u32;10] = [28, 41, 23, 36, 4, 18, 50, 11, 2, 15];
+	//test for pair - different pairs
+	//let perm:[u32;10] = [29, 41, 23, 36, 5, 18, 50, 11, 3, 15];
+
+	//test for high card
+	//let perm:[u32;10] = [14, 24, 3, 4, 5, 6, 7, 8, 9, 10];
+
+	let winner:[String;5] = deal(perm);
+	println!("{:?}", winner);
 }
