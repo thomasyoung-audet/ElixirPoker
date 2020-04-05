@@ -1,6 +1,6 @@
 use std::fmt;
 
-Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
 enum Suit {
     Spades,
     Hearts,
@@ -178,7 +178,7 @@ fn sort_hand(mut hand: Vec<Card>) -> Vec<Card> {
 }
 
 
-fn tie_breaker(hand1: Vec<Card>, hand2: Vec<Card>, hand_value: u8) -> Vec<Card> {
+fn tie_breaker(mut hand1: Vec<Card>, mut hand2: Vec<Card>, hand_value: u8) -> Vec<Card> {
 	if hand_value == 1 {
 		if hand1[0].suit.best_suit() < hand2[0].suit.best_suit() {
 			return hand1
@@ -243,10 +243,54 @@ fn tie_breaker(hand1: Vec<Card>, hand2: Vec<Card>, hand_value: u8) -> Vec<Card> 
 		}
 	} else if hand_value == 8 { // two pair
 
-		return hand2
+		let hand1_tup = find_pair_value(&hand1);
+		let hand2_tup = find_pair_value(&hand2);
+		if hand1_tup.0 > hand2_tup.0 {
+			return hand1
+		} else if hand1_tup.0 < hand2_tup.0 {
+			return hand2
+		} else { // check the other elems in the list
+			return hand1
+		}
+
 
 	} else if hand_value == 9 { // pair
-		return hand2
+		
+		let hand1_tup = find_pair_value(&hand1);
+		let hand2_tup = find_pair_value(&hand2);
+		if hand1_tup.0 > hand2_tup.0 {
+			return hand1
+		} else if hand1_tup.0 < hand2_tup.0 {
+			return hand2
+		} else { // check the other elems in the list
+			let pair1_suit = hand1[hand1_tup.1].suit.best_suit();
+			let pair2_suit = hand2[hand2_tup.1].suit.best_suit();
+
+			hand1.remove(hand1_tup.1);
+			hand1.remove(hand1_tup.1);
+			hand2.remove(hand1_tup.1);
+			hand2.remove(hand1_tup.1);
+
+			let mut i:usize = 2;
+			while hand1[i].compare_val() == hand2[i].compare_val() && i != 0 {
+				i = i-1;
+			}
+			if hand1[i].compare_val() == hand2[i].compare_val() {
+				if pair1_suit < pair2_suit {
+					return hand1
+				} else {
+					return hand2
+				}
+			} else {
+				if hand1[i].compare_val() > hand2[i].compare_val() {
+					return hand1
+				} else {
+					return hand2
+				}
+			}
+
+		}
+
 	} else { //high card
 		let mut i:usize = 4;
 		while hand1[i].compare_val() == hand2[i].compare_val() && i != 0 {
@@ -266,6 +310,18 @@ fn tie_breaker(hand1: Vec<Card>, hand2: Vec<Card>, hand_value: u8) -> Vec<Card> 
 			}
 		}
 	}
+}
+
+fn find_pair_value(hand: &Vec<Card>) -> (u32, usize) { //should return the highest pair.
+	let mut found = false;
+	let mut i:usize = 4;
+	while found == false {
+		if hand[i].compare_val() == hand[i-1].compare_val() {
+			found = true
+		}
+		i = i-1;
+	}
+	return (hand[i].compare_val(), i)
 }
 
 
@@ -315,7 +371,7 @@ fn main() {
 	//test for pair - same pairs, bigger card
 	//let perm:[u32;10] = [28, 41, 23, 36, 4, 18, 50, 11, 2, 15];
 	//test for pair - different pairs
-	//let perm:[u32;10] = [29, 41, 23, 36, 5, 18, 50, 11, 3, 15];
+	let perm:[u32;10] = [29, 41, 23, 36, 5, 18, 50, 11, 3, 15];
 
 	//test for high card
 	//let perm:[u32;10] = [14, 24, 3, 4, 5, 6, 7, 8, 9, 10];
