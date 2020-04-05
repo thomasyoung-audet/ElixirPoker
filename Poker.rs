@@ -1,15 +1,6 @@
 use std::fmt;
-//let perm:[u32;10] = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];
-//let winner:[&str;5] = deal(perm);
-//Your deal function should accept an array of 10 unsigned integers, and your deal function
-//should return an array of five string slices. The strings should be formatted in the same way
-//as all previous assignments.
-//Your submission should not include a main() function. Our tester will implement main()
 
-
-//I should create Card Classes, so I can compare them easily. Dont have to do all the modulp stuff i had to do 
-//for elixir.
-#[derive(Debug, Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
+Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
 enum Suit {
     Spades,
     Hearts,
@@ -97,7 +88,6 @@ fn deal(arr: [u32; 10]) -> [String;5]{
 	println!("Hands: ");
 	println!("{:?}", hand1);
 	println!("{:?}", hand2);
-	println!("{}", hand1[0]);
 	//["1C", "2C", "3C", "4C", "5C"];
 
 
@@ -139,8 +129,10 @@ fn get_value(hand: &Vec<Card>) -> u8 {
 		if hand[0].value == 10 && hand[1].value == 11 && hand[2].value == 12 && hand[3].value == 13 
 		&& hand[4].value == 1 {
 			return 1
-		} else if hand[0].value == hand[1].value -1 && hand[1].value == hand[2].value -1 
-		&& hand[2].value == hand[3].value -1 && hand[3].value == hand[4].value -1 { //its a straight flush
+		} else if (hand[0].value == hand[1].value -1 && hand[1].value == hand[2].value -1 
+		&& hand[2].value == hand[3].value -1 && hand[3].value == hand[4].value -1) ||
+		(hand[0].value == 2 && hand[1].value == 3 && hand[2].value == 4 && hand[3].value == 5
+		&& hand[4].value == 1) { //its a straight flush
 			return 2
 		} else { //its a normal flush
 			return 5
@@ -193,14 +185,86 @@ fn tie_breaker(hand1: Vec<Card>, hand2: Vec<Card>, hand_value: u8) -> Vec<Card> 
 		} else {
 			return hand2
 		}
-	} else if hand_value == 2 {
-		if hand1[4].compare_val() > hand2[4].compare_val() {
+	} else if hand_value == 2 { // compare the value of the highest is the flushes
+		if hand1[3].compare_val() > hand2[3].compare_val() {
+			return hand1
+		} else if hand1[0].value == hand2[0].value && hand1[4].value > hand2[4].value {
+			return hand1
+		} else if hand1[0].value == hand2[0].value && hand1[4].value < hand2[4].value {
+			return hand2
+		} else if hand1[0].value == hand2[0].value {
+			if hand1[0].suit.best_suit() < hand2[0].suit.best_suit() {
+				return hand1
+			} else {
+				return hand2
+			}
+		} else {
+			return hand2
+		}
+	} else if hand_value == 3 || hand_value == 4 || hand_value == 7 { // 4 of a kind or full house or 3 of a kind
+		if hand1[2].compare_val() > hand2[2].compare_val() { //the middle value will always be part of the 4 or 3 of a kind
 			return hand1
 		} else {
 			return hand2
 		}
-	} else {
+	} else if hand_value == 5 { // flush
+		let mut i:usize = 4;
+		while hand1[i].compare_val() == hand2[i].compare_val() && i != 0 {
+			i = i-1;
+		}
+		if hand1[i].compare_val() == hand2[i].compare_val() {
+			if hand1[4].suit.best_suit() < hand2[4].suit.best_suit() {
+				return hand1
+			} else {
+				return hand2
+			}
+		} else {
+			if hand1[i].compare_val() > hand2[i].compare_val() {
+				return hand1
+			} else {
+				return hand2
+			}
+		}
+	} else if hand_value == 6 { // straight
+		if hand1[3].compare_val() > hand2[3].compare_val() {
+			return hand1
+		} else if hand1[0].value == hand2[0].value && hand1[4].value > hand2[4].value {
+			return hand1
+		} else if hand1[0].value == hand2[0].value && hand1[4].value < hand2[4].value {
+			return hand2
+		} else if hand1[0].value == hand2[0].value {
+			if hand1[0].suit.best_suit() < hand2[0].suit.best_suit() {
+				return hand1
+			} else {
+				return hand2
+			}
+		} else {
+			return hand2
+		}
+	} else if hand_value == 8 { // two pair
+
 		return hand2
+
+	} else if hand_value == 9 { // pair
+		return hand2
+	} else { //high card
+		let mut i:usize = 4;
+		while hand1[i].compare_val() == hand2[i].compare_val() && i != 0 {
+			i = i-1;
+		}
+		if hand1[i].compare_val() == hand2[i].compare_val() {
+			if hand1[4].suit.best_suit() < hand2[4].suit.best_suit() {
+				return hand1
+			} else {
+				return hand2
+			}
+		} else {
+			if hand1[i].compare_val() > hand2[i].compare_val() {
+				return hand1
+			} else {
+				return hand2
+			}
+		}
 	}
 }
 
@@ -214,7 +278,11 @@ fn main() {
 	//let perm:[u32;10] = [40, 14, 49, 23, 50, 24, 51, 25, 52, 26];
 
 	//test for straight flush
-	let perm:[u32;10] = [48, 22, 49, 23, 50, 24, 51, 25, 52, 26];
+	//let perm:[u32;10] = [48, 22, 49, 23, 50, 24, 51, 25, 52, 26];
+	//let perm:[u32;10] = [1, 22, 2, 23, 3, 24, 4, 25, 5, 26];
+	//let perm:[u32;10] = [1, 15, 2, 16, 3, 17, 4, 18, 5, 19];
+	//let perm:[u32;10] = [1, 20, 2, 16, 3, 17, 4, 18, 5, 19];
+
 
 	//test for 4 of a kind
 	//let perm:[u32;10] = [1, 2, 26, 15, 27, 28, 40, 41, 14, 52];
@@ -251,6 +319,10 @@ fn main() {
 
 	//test for high card
 	//let perm:[u32;10] = [14, 24, 3, 4, 5, 6, 7, 8, 9, 10];
+	//let perm:[u32;10] = [39, 26, 10, 23, 33, 46, 31, 18, 2, 16];
+	//let perm:[u32;10] = [13, 26, 10, 23, 33, 46, 31, 18, 2, 15];
+
+
 
 	let winner:[String;5] = deal(perm);
 	println!("{:?}", winner);
