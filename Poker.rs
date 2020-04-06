@@ -91,7 +91,8 @@ fn deal(arr: [u32; 10]) -> [String;5]{
 	//["1C", "2C", "3C", "4C", "5C"];
 
 
-	let winning_hand = compare(hand1, hand2);
+	let mut winning_hand = compare(hand1, hand2);
+	winning_hand.sort_by_key(|x| x.value);
 	let winner = [winning_hand[0].to_string(), winning_hand[1].to_string(), 
 	winning_hand[2].to_string(), winning_hand[3].to_string(), winning_hand[4].to_string()];
 	winner
@@ -112,7 +113,7 @@ fn compare(hand1: Vec<Card>, hand2: Vec<Card>) -> Vec<Card> {
 		return tie_breaker(hand1, hand2, hand1_value)
 	}
 	else {
-		if hand1_value > hand2_value {
+		if hand1_value < hand2_value {
 			hand1
 		}
 		else {
@@ -178,7 +179,7 @@ fn sort_hand(mut hand: Vec<Card>) -> Vec<Card> {
 }
 
 
-fn tie_breaker(mut hand1: Vec<Card>, mut hand2: Vec<Card>, hand_value: u8) -> Vec<Card> {
+fn tie_breaker(hand1: Vec<Card>, hand2: Vec<Card>, hand_value: u8) -> Vec<Card> {
 	if hand_value == 1 {
 		if hand1[0].suit.best_suit() < hand2[0].suit.best_suit() {
 			return hand1
@@ -242,55 +243,111 @@ fn tie_breaker(mut hand1: Vec<Card>, mut hand2: Vec<Card>, hand_value: u8) -> Ve
 			return hand2
 		}
 	} else if hand_value == 8 { // two pair
-
-		let hand1_tup = find_pair_value(&hand1);
-		let hand2_tup = find_pair_value(&hand2);
-		if hand1_tup.0 > hand2_tup.0 {
-			return hand1
-		} else if hand1_tup.0 < hand2_tup.0 {
-			return hand2
-		} else { // check the other elems in the list
-			return hand1
-		}
-
-
-	} else if hand_value == 9 { // pair
+		let mut hand1_clone = hand1.clone();
+		let mut hand2_clone = hand2.clone();
 		
-		let hand1_tup = find_pair_value(&hand1);
-		let hand2_tup = find_pair_value(&hand2);
+		let hand1_tup = find_pair_value(&hand1_clone);
+		let hand2_tup = find_pair_value(&hand2_clone);
 		if hand1_tup.0 > hand2_tup.0 {
 			return hand1
 		} else if hand1_tup.0 < hand2_tup.0 {
 			return hand2
 		} else { // check the other elems in the list
-			let pair1_suit = hand1[hand1_tup.1].suit.best_suit();
-			let pair2_suit = hand2[hand2_tup.1].suit.best_suit();
+			
+			//get the suits of the top pair
+			let pair1_suit = if hand1_clone[hand1_tup.1].suit.best_suit() < hand1_clone[hand1_tup.1 -1].suit.best_suit() {
+				hand1_clone[hand1_tup.1].suit.best_suit()
+			} else {
+				hand1_clone[hand1_tup.1 -1].suit.best_suit()
+			};
+			
+			let pair2_suit = if hand2_clone[hand2_tup.1].suit.best_suit() < hand2_clone[hand2_tup.1 -1].suit.best_suit() {
+				hand2_clone[hand2_tup.1].suit.best_suit()
+			} else {
+				hand2_clone[hand2_tup.1 -1].suit.best_suit()
+			};
+			//remove the pair
+			hand1_clone.remove(hand1_tup.1 -1);
+			hand1_clone.remove(hand1_tup.1 -1);
+			hand2_clone.remove(hand1_tup.1 -1);
+			hand2_clone.remove(hand1_tup.1 -1);
 
-			hand1.remove(hand1_tup.1);
-			hand1.remove(hand1_tup.1);
-			hand2.remove(hand1_tup.1);
-			hand2.remove(hand1_tup.1);
+			let hand1_tup_2 = find_pair_value(&hand1_clone);
+			let hand2_tup_2 = find_pair_value(&hand2_clone);
+
+			if hand1_tup_2.0 > hand2_tup_2.0 {
+				return hand1
+			} else if hand1_tup_2.0 < hand2_tup_2.0 {
+				return hand2
+			} else { // check the other elems in the list 
+				//remove the pair
+				hand1_clone.remove(hand1_tup_2.1 -1);
+				hand1_clone.remove(hand1_tup_2.1 -1);
+				hand2_clone.remove(hand1_tup_2.1 -1);
+				hand2_clone.remove(hand1_tup_2.1 -1);
+				if hand1_clone[0].compare_val() == hand2_clone[0].compare_val() {
+					if pair1_suit < pair2_suit {
+						return hand1
+					} else {
+						return hand2
+					}
+				} else {
+					if hand1_clone[0].compare_val() > hand2_clone[0].compare_val() {
+						return hand1
+					} else {
+						return hand2
+					}
+				}
+			}
+		}
+	} else if hand_value == 9 { // pair
+
+		let mut hand1_clone = hand1.clone();
+		let mut hand2_clone = hand2.clone();
+		
+		let hand1_tup = find_pair_value(&hand1_clone);
+		let hand2_tup = find_pair_value(&hand2_clone);
+		if hand1_tup.0 > hand2_tup.0 {
+			return hand1
+		} else if hand1_tup.0 < hand2_tup.0 {
+			return hand2
+		} else { // check the other elems in the list
+			
+			let pair1_suit = if hand1_clone[hand1_tup.1].suit.best_suit() < hand1_clone[hand1_tup.1 -1].suit.best_suit() {
+				hand1_clone[hand1_tup.1].suit.best_suit()
+			} else {
+				hand1_clone[hand1_tup.1 -1].suit.best_suit()
+			};
+			
+			let pair2_suit = if hand2_clone[hand2_tup.1].suit.best_suit() < hand2_clone[hand2_tup.1 -1].suit.best_suit() {
+				hand2_clone[hand2_tup.1].suit.best_suit()
+			} else {
+				hand2_clone[hand2_tup.1 -1].suit.best_suit()
+			};
+
+			hand1_clone.remove(hand1_tup.1 -1);
+			hand1_clone.remove(hand1_tup.1 -1);
+			hand2_clone.remove(hand1_tup.1 -1);
+			hand2_clone.remove(hand1_tup.1 -1);
 
 			let mut i:usize = 2;
-			while hand1[i].compare_val() == hand2[i].compare_val() && i != 0 {
+			while hand1_clone[i].compare_val() == hand2_clone[i].compare_val() && i != 0 {
 				i = i-1;
 			}
-			if hand1[i].compare_val() == hand2[i].compare_val() {
+			if hand1_clone[i].compare_val() == hand2_clone[i].compare_val() {
 				if pair1_suit < pair2_suit {
 					return hand1
 				} else {
 					return hand2
 				}
 			} else {
-				if hand1[i].compare_val() > hand2[i].compare_val() {
+				if hand1_clone[i].compare_val() > hand2_clone[i].compare_val() {
 					return hand1
 				} else {
 					return hand2
 				}
 			}
-
 		}
-
 	} else { //high card
 		let mut i:usize = 4;
 		while hand1[i].compare_val() == hand2[i].compare_val() && i != 0 {
@@ -314,16 +371,17 @@ fn tie_breaker(mut hand1: Vec<Card>, mut hand2: Vec<Card>, hand_value: u8) -> Ve
 
 fn find_pair_value(hand: &Vec<Card>) -> (u32, usize) { //should return the highest pair.
 	let mut found = false;
-	let mut i:usize = 4;
+	let mut i:usize = hand.len() -1;
 	while found == false {
+		
 		if hand[i].compare_val() == hand[i-1].compare_val() {
-			found = true
+			found = true;
+			i = i + 1;
 		}
 		i = i-1;
 	}
 	return (hand[i].compare_val(), i)
 }
-
 
 fn main() {
 	//let perm:[u32;10] = [2, 46, 3, 2, 4, 45, 5, 52, 6, 47];
@@ -348,6 +406,7 @@ fn main() {
 
 	//test for flush
 	//let perm:[u32;10] = [41, 21, 48, 23, 50, 24, 51, 25, 52, 26];
+	//let perm:[u32;10] = [48, 22, 49, 23, 50, 24, 51, 25, 52, 26];
 
 	//test for straight
 	//let perm:[u32;10] = [3, 16, 17, 30, 31, 18, 45, 33, 46, 32];
@@ -371,12 +430,22 @@ fn main() {
 	//test for pair - same pairs, bigger card
 	//let perm:[u32;10] = [28, 41, 23, 36, 4, 18, 50, 11, 2, 15];
 	//test for pair - different pairs
-	let perm:[u32;10] = [29, 41, 23, 36, 5, 18, 50, 11, 3, 15];
+	//let perm:[u32;10] = [29, 41, 23, 36, 5, 18, 50, 11, 3, 15];
 
 	//test for high card
 	//let perm:[u32;10] = [14, 24, 3, 4, 5, 6, 7, 8, 9, 10];
 	//let perm:[u32;10] = [39, 26, 10, 23, 33, 46, 31, 18, 2, 16];
 	//let perm:[u32;10] = [13, 26, 10, 23, 33, 46, 31, 18, 2, 15];
+
+	//testcases failed last time
+	//let perm:[u32;10] = [15, 48, 16, 35, 17, 22, 14, 49, 18, 9];
+	//let perm:[u32;10] = [18, 48, 17, 9, 15, 22, 14, 35, 16, 49];
+	//let perm:[u32;10] = [51, 40, 1, 38, 15, 41, 14, 28, 2, 27];
+	//let perm:[u32;10] = [2, 40, 1, 38, 14, 28, 51, 41, 15, 27];
+	//let perm:[u32;10] = [13, 45, 41, 47, 6, 52, 7, 2, 8, 46];
+	//let perm:[u32;10] = [13, 46, 6, 2, 41, 45, 7, 52, 8, 47];
+	//let perm:[u32;10] = [15, 38, 17, 26, 18, 51, 14, 39, 16, 52];
+	let perm:[u32;10] = [14, 26, 17, 38, 15, 39, 18, 52, 16, 51];
 
 
 
