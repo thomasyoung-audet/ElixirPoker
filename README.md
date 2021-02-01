@@ -8,12 +8,11 @@ are Clubs, Diamonds, Hearts, Spades. Within each suit, the ranks are ordered fro
 
 Thus, an input array that started with the integers [38, 48, 11, 6, ...] would represent Queen
 of Hearts, 9 of Spades, Jack of Clubs, 6 of Clubs, and so on.
-Your program will accept this permutation array as input and use it to deal two poker hands
-of 5 cards each in an alternating fashion. I.e., the first card goes to hand 1, the second cardgoes to hand 2, the third card goes to hand 1, fourth to hand 2, etc. until each hand has 5
+This program will accept this permutation array as input and use it to deal two poker hands 
+of 5 cards each in an alternating fashion. I.e., the first card goes to hand 1, the second 
+card goes to hand 2, the third card goes to hand 1, fourth to hand 2, etc. until each hand has 5
 cards. Once dealt, the program will analyze each hand according to the rules from the
 website above and decide a winner.
-
-Ties
 
 There will be no ties. If both hands have the same type, tie breaking is implemented 
 based on the ranks of the cards. For example, if both hands are a flush, then the hand with
